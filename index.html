@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EQUILIBRIUM-IJC</title>
+    <!-- SheetJS para leer archivos Excel (.xlsx, .xls) en el navegador -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #E65100;
+            --primary-hover: #BF360C;
+            --sidebar-bg: #FFF3E0;
+            --card-bg: #FFE0B2;
+            --bg-color: #FAFAFA;
+            --text-color: #212121;
+            --border-color: #E0E0E0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* Login Screen */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-width: 450px;
+            width: 100%;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #CCC;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Main App Layout */
+        #app-screen {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            padding: 24px 20px;
+            border-right: 1px solid #FFE0B2;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            font-size: 13px;
+            font-weight: 600;
+            color: #424242;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            border: none;
+            background: transparent;
+            text-align: left;
+            color: var(--text-color);
+        }
+
+        .nav-item:hover {
+            background-color: #FFE0B2;
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .file-upload-box {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px dashed var(--primary-color);
+            font-size: 13px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 32px 40px;
+            max-width: 1200px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards & Alerts */
+        .metric-card {
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary-color);
+            margin-bottom: 12px;
+        }
+
+        .metric-card h4 {
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #212121;
+        }
+
+        .result-banner {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .result-banner h3, .result-banner h1 {
+            color: white;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background-color: #FFEBEE;
+            border-left: 5px solid #D32F2F;
+            color: #B71C1C;
+        }
+
+        .alert-warning {
+            background-color: #FFF8E1;
+            border-left: 5px solid #FFA000;
+            color: #5D4037;
+        }
+
+        .alert-info {
+            background-color: #E3F2FD;
+            border-left: 5px solid #1976D2;
+            color: #0D47A1;
+        }
+
+        .alert-success {
+            background-color: #E8F5E9;
+            border-left: 5px solid #388E3C;
+            color: #1B5E20;
+        }
+
+        .section-subtitle {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #EEE;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Expander */
+        details {
+            background: white;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+        }
+
+        summary {
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        details[open] summary {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #EEE;
+            padding-bottom: 8px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0 15px;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="login-screen">
+    <h1 style="font-size: 36px;">EQUILIBRIUM-IJC</h1>
+    <h4 style="max-width: 750px; color: #424242; font-weight: 500;">
+        Evaluación de Química, Uso e Incompatibilidades de Liofilizados en Interacciones y Bioestabilidad Requerida en Infusiones y Unidades de Mezclas
+    </h4>
+
+    <div class="login-box">
+        <h3>Acceso Restringido - Instituto Jalisciense de Cancerología</h3>
+        <div class="form-group" style="margin-top: 15px;">
+            <label for="password-input">Contraseña Institucional:</label>
+            <input type="password" id="password-input" class="form-control" placeholder="Ingrese la contraseña..." onkeypress="if(event.key==='Enter') login()">
+        </div>
+        <button class="btn btn-full" onclick="login()">Ingresar</button>
+        <div id="login-error" class="alert alert-error" style="display: none; margin-top: 12px;">
+            Contraseña incorrecta. Por favor intente de nuevo.
+        </div>
+    </div>
+</div>
+
+<!-- APLICACIÓN PRINCIPAL -->
+<div id="app-screen">
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>EQUILIBRIUM-IJC</h2>
+                <p>Sistema de Soporte de Farmacovigilancia</p>
+            </div>
+
+            <button class="btn" onclick="logout()">Cerrar Sesión 🔓</button>
+
+            <div>
+                <h4 style="font-size: 14px; margin-bottom: 8px;">📂 Gestión de Base de Datos</h4>
+                <div class="file-upload-box">
+                    <label for="excel-upload" style="display:block; margin-bottom:6px; font-weight:600;">Cargar archivo Excel (.xlsx, .xls)</label>
+                    <input type="file" id="excel-upload" accept=".xlsx, .xls" onchange="handleExcelUpload(event)" style="width: 100%; font-size: 12px;">
+                    <div id="upload-status" style="margin-top: 6px; font-size: 12px;"></div>
+                </div>
+            </div>
+
+            <div>
+                <h4 style="font-size: 14px; margin-bottom: 8px;">Secciones del Sistema:</h4>
+                <nav class="nav-menu">
+                    <button class="nav-item active" onclick="showSection('consulta', this)">🔍 Consulta de Fármacos</button>
+                    <button class="nav-item" onclick="showSection('calculadora', this)">📐 Calculadora de Dosificación</button>
+                    <button class="nav-item" onclick="showSection('verificador', this)">💊 Verificador de Esquemas</button>
+                    <button class="nav-item" onclick="showSection('anadir', this)">➕ Añadir Medicamento</button>
+                    <button class="nav-item" onclick="showSection('autores', this)">👥 Autores y Bibliografía</button>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+
+            <!-- 1. CONSULTA DE FÁRMACOS -->
+            <section id="sec-consulta" class="section active">
+                <h1>🔍 Consulta y Ficha Técnica de Fármacos</h1>
+                <div class="form-group" style="max-width: 450px; margin-top: 15px;">
+                    <label for="drug-select">Seleccione el medicamento para consultar:</label>
+                    <select id="drug-select" class="form-control" onchange="renderDrugDetails()"></select>
+                </div>
+
+                <div id="drug-details-container" class="grid-2"></div>
+            </section>
+
+            <!-- 2. CALCULADORA DE DOSIFICACIÓN -->
+            <section id="sec-calculadora" class="section">
+                <h1>📐 Calculadora Antropométrica y de Dosificación</h1>
+                <div class="grid-2">
+                    <div>
+                        <h3>Datos del Paciente</h3>
+                        <div class="form-group">
+                            <label for="calc-peso">Peso del paciente (kg):</label>
+                            <input type="number" id="calc-peso" class="form-control" min="1" max="250" step="0.1" value="70.0" oninput="calculateDose()">
+                        </div>
+                        <div class="form-group">
+                            <label for="calc-talla">Altura/Talla (m):</label>
+                            <input type="number" id="calc-talla" class="form-control" min="0.5" max="2.5" step="0.01" value="1.70" oninput="calculateDose()">
+                        </div>
+
+                        <div class="metric-card">
+                            <h4>Índice de Masa Corporal (IMC):</h4>
+                            <div class="metric-value" id="imc-val">24.22 kg/m²</div>
+                        </div>
+                        <div class="metric-card">
+                            <h4>Superficie Corporal (Fórmula Mosteller):</h4>
+                            <div class="metric-value" id="sc-val">1.82 m²</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3>Dosificación Clínica</h3>
+                        <div class="form-group">
+                            <label for="calc-drug">Medicamento de referencia:</label>
+                            <select id="calc-drug" class="form-control"></select>
+                        </div>
+
+                        <label style="font-weight: 600; font-size: 14px;">Parámetro de cálculo:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="calc-type" value="sc" checked onchange="calculateDose()"> Superficie Corporal (mg/m²)</label>
+                            <label><input type="radio" name="calc-type" value="peso" onchange="calculateDose()"> Peso Corporal (mg/kg)</label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="calc-dose">Dosis indicada por unidad:</label>
+                            <input type="number" id="calc-dose" class="form-control" min="0.1" max="2000" step="1" value="100.0" oninput="calculateDose()">
+                        </div>
+
+                        <div class="result-banner">
+                            <h3>Dosis Calculada Requerida:</h3>
+                            <h1 id="final-dose-val" style="font-size: 40px; margin: 5px 0;">181.81 mg</h1>
+                            <small id="formula-text">Fórmula aplicada: 100 mg/m² × 1.82 m²</small>
+                        </div>
+
+                        <div class="alert alert-warning" style="margin-top: 15px;">
+                            ⚠️ <strong>Advertencia de Validación Clínica:</strong> Verifique siempre las condiciones de toxicidad acumulativa, estado de depuración renal y recuento plaquetario antes de proceder a la preparación de la infusión.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. VERIFICADOR DE ESQUEMAS -->
+            <section id="sec-verificador" class="section">
+                <h1>💊 Verificador de Esquemas y Polifarmacia</h1>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="scheme-select">Seleccione los fármacos del protocolo (mantenga Ctrl/Cmd para seleccionar varios):</label>
+                    <select id="scheme-select" class="form-control" multiple size="5" onchange="renderScheme()"></select>
+                </div>
+
+                <div id="scheme-output">
+                    <div class="alert alert-info">
+                        Por favor, seleccione al menos un fármaco del selector superior para iniciar el análisis cruzado de compatibilidades.
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. AÑADIR MEDICAMENTO -->
+            <section id="sec-anadir" class="section">
+                <h1>➕ Registro Dinámico de Nuevos Fármacos</h1>
+                <div class="alert alert-info" style="margin-top: 10px;">
+                    Registre manualmente los fármacos que requiera agregar de forma temporal durante esta sesión de navegación.
+                </div>
+
+                <form id="add-drug-form" onsubmit="addCustomDrug(event)">
+                    <div class="grid-2">
+                        <div>
+                            <div class="form-group"><label>Nombre del medicamento:</label><input type="text" id="add-name" class="form-control"></div>
+                            <div class="form-group"><label>Tipo de fármaco:</label><input type="text" id="add-tipo" class="form-control"></div>
+                            <div class="form-group"><label>Recomendación de reconstitución:</label><textarea id="add-reconst" class="form-control" rows="2"></textarea></div>
+                            <div class="form-group"><label>Dilución del vial liofilizado:</label><textarea id="add-dilution" class="form-control" rows="2"></textarea></div>
+                            <div class="form-group"><label>Estabilidad del vial cerrado:</label><input type="text" id="add-est-cerrado" class="form-control"></div>
+                            <div class="form-group"><label>Estabilidad de la mezcla:</label><input type="text" id="add-est-mezcla" class="form-control"></div>
+                            <div class="form-group"><label>Dosis máxima guía:</label><input type="text" id="add-max-dose" class="form-control"></div>
+                        </div>
+                        <div>
+                            <div class="form-group"><label>Tiempo de infusión:</label><input type="text" id="add-inf-time" class="form-control"></div>
+                            <div class="form-group"><label>Excipientes:</label><input type="text" id="add-excipientes" class="form-control"></div>
+                            <div class="form-group"><label>Contraindicaciones:</label><textarea id="add-contraindic" class="form-control" rows="2"></textarea></div>
+                            <div class="form-group"><label>Interacciones:</label><textarea id="add-interact" class="form-control" rows="2"></textarea></div>
+                            <div class="form-group"><label>Incompatibilidades:</label><textarea id="add-incompat" class="form-control" rows="2"></textarea></div>
+                            <div class="form-group"><label>Reacciones adversas:</label><textarea id="add-adv" class="form-control" rows="2"></textarea></div>
+                            <div class="form-group"><label>Premedicación requerida:</label><textarea id="add-premed" class="form-control" rows="2"></textarea></div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn" style="margin-top: 10px;">Agregar a la plataforma 💾</button>
+                </form>
+                <div id="add-drug-msg" style="margin-top: 12px;"></div>
+            </section>
+
+            <!-- 5. AUTORES Y BIBLIOGRAFÍA -->
+            <section id="sec-autores" class="section">
+                <h1>👥 Autores y Colaboradores</h1>
+                <div class="grid-2">
+                    <div>
+                        <h3>Comité Científico y Desarrolladores</h3>
+                        <ul style="padding-left: 20px; line-height: 2;">
+                            <li><strong>LQFBT. Yesenia Lizbeth Lopez Diaz</strong></li>
+                            <li><strong>LQFBT. Angel Gabriel Aceves Tamayo</strong></li>
+                            <li><strong>LQFBT. Erick Vazquez Perez</strong></li>
+                            <li><strong>LQFBT. Alyson Alejandria Perez Reyes</strong></li>
+                            <li><strong>Lic. oncóloga Jocelyn Karina Ramos Barajas</strong></li>
+                            <li><strong>Enfermera Oncóloga. Mónica Elizabeth Nuño Basulto</strong></li>
+                            <li><strong>QFB Yubal Alejandro Alfaro Ramírez</strong></li>
+                            <li><strong>Lic. Enfermería. Gabriel Avalos Alcántara</strong></li>
+                            <li><strong>Dr. José Alfonso Cruz Ramos</strong></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>📚 Bibliografía de Referencia</h3>
+                        <ol style="padding-left: 20px; line-height: 1.8; font-size: 14px;">
+                            <li><strong>Diccionario de Especialidades en Oncología PLM (México)</strong>, S.A, Octava Edición 2017.</li>
+                            <li><strong>Product Information:</strong> mitoxantrone IV injection, mitoxantrone IV injection. Teva Parenteral Medicines Inc, Irvine, CA, 2009. Citado en: <a href="https://www.micromedexsolutions.com" target="_blank">Micromedex Solutions</a>.</li>
+                            <li><strong>Martin, M. (2015).</strong> <em>nab-Paclitaxel dose and schedule in breast cancer.</em> PubMed Central (PMC). <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4465168/" target="_blank">PMC4465168</a>.</li>
+                            <li><strong>Abraxane (paclitaxel protein bound)</strong> <em>dosing, indications, interactions, adverse effects, and more.</em> (2020, 27 agosto). Medscape. <a href="https://reference.medscape.com/drug/abraxane-paclitaxel-protein-bound-999775" target="_blank">Medscape reference</a>.</li>
+                            <li><strong>Agencia Española de Medicamentos y Productos Sanitarios.</strong> (2026). Centro de Información Online de Medicamentos (CIMA). <a href="https://cima.aemps.es/cima/publico/home.html" target="_blank">CIMA AEMPS</a>.</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<script>
+    const defaultData = [
+        {
+            "Nombre del medicamento": "Cisplatino",
+            "tipo de fármaco": "Alquilante",
+            "recomendación de reconstitución": "Reconstituir con agua inyectable sterile para obtener 1 mg/mL.",
+            "dilución del vial liofilizado": "Diluir en Solución Salina al 0.9% (mínimo 250-500 mL).",
+            "estabilidad del vial cerrado": "Temperatura ambiente (15-25°C), protegido de la luz. No refrigerar para evitar precipitación.",
+            "estabilidad de la mezcla": "Estable por 20 horas a temperatura ambiente (con protección de luz si se requiere).",
+            "dosis máxima guía": "100 mg/m2 por ciclo.",
+            "tiempo de infusión": "1 a 2 horas (requiere hidratación previa y posterior).",
+            "excipientes": "Cloruro de sodio, manitol.",
+            "contraindicaciones": "Insuficiencia renal preexistente, mielosupresión grave, deterioro auditivo.",
+            "interacciones": "Evitar aminoglucósidos (aumento de nefrotoxicidad).",
+            "incompatibilidades": "Incompatible con aluminio (agujas, equipos de infusión).",
+            "reacciones adversas": "Nauseas, vómitos severos, nefrotoxicidad, ototoxicidad.",
+            "premedicación requerida": "Antieméticos potentes (ondansetrón + dexametasona) e hidratación vigorosa."
+        },
+        {
+            "Nombre del medicamento": "Paclitaxel",
+            "tipo de fármaco": "Taxano",
+            "recomendación de reconstitución": "No aplica (generalmente es solución lista para diluir).",
+            "dilución del vial liofilizado": "Diluir en Solución Fisiológica al 0.9% o Glucosa al 5%.",
+            "estabilidad del vial cerrado": "Temperatura de 20-25°C. No refrigerar.",
+            "estabilidad de la mezcla": "Estable por 27 horas a temperatura ambiente.",
+            "dosis máxima guía": "175 mg/m2 por ciclo.",
+            "tiempo de infusión": "3 horas con equipo libre de PVC.",
+            "excipientes": "Aceite de ricino polioxietilado (Cremophor EL), etanol.",
+            "contraindicaciones": "Hipersensibilidad grave al Cremophor EL, neutropenia basal < 1,500/mm3.",
+            "interacciones": "Sustrato de CYP2C8 y CYP3A4.",
+            "incompatibilidades": "Plásticos de PVC (usar sistemas de infusión revestidos o de polietileno).",
+            "reacciones adversas": "Mielosupresión, neuropatía periférica, alopecia, mialgias.",
+            "premedicación requerida": "Dexametasona, difenhidramina y antagonista H2 (ranitidina/famotidina) para prevenir hipersensibilidad."
+        }
+    ];
+
+    let dbList = [...defaultData];
+    let customDrugs = [];
+
+    function getAllDrugs() {
+        return [...dbList, ...customDrugs];
+    }
+
+    function login() {
+        const pwd = document.getElementById("password-input").value;
+        if (pwd === "IJC2026*") {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("app-screen").style.display = "block";
+            document.getElementById("login-error").style.display = "none";
+            refreshDrugSelectors();
+            calculateDose();
+        } else {
+            document.getElementById("login-error").style.display = "block";
+        }
+    }
+
+    function logout() {
+        document.getElementById("password-input").value = "";
+        document.getElementById("app-screen").style.display = "none";
+        document.getElementById("login-screen").style.display = "flex";
+    }
+
+    function showSection(sectionId, btnElement) {
+        document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+        document.querySelectorAll(".nav-item").forEach(btn => btn.classList.remove("active"));
+        document.getElementById("sec-" + sectionId).classList.add("active");
+        btnElement.classList.add("active");
+    }
+
+    function handleExcelUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const statusEl = document.getElementById("upload-status");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: "array" });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                // Normalize column names
+                dbList = jsonData.map(row => {
+                    const cleanRow = {};
+                    Object.keys(row).forEach(k => cleanRow[k.trim()] = row[k]);
+                    return cleanRow;
+                });
+                statusEl.innerHTML = "<span style='color: #2E7D32; font-weight: 600;'>¡Base de datos cargada correctamente!</span>";
+                refreshDrugSelectors();
+            } catch (err) {
+                statusEl.innerHTML = "<span style='color: #C62828;'>Error leyendo el archivo: " + err.message + "</span>";
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function refreshDrugSelectors() {
+        const allDrugs = getAllDrugs();
+        const names = [...new Set(allDrugs.map(d => String(d["Nombre del medicamento"] || "Sin Nombre")))].sort();
+
+        const selects = ["drug-select", "calc-drug", "scheme-select"];
+        selects.forEach(id => {
+            const el = document.getElementById(id);
+            el.innerHTML = "";
+            names.forEach(name => {
+                const opt = document.createElement("option");
+                opt.value = name;
+                opt.textContent = name;
+                el.appendChild(opt);
+            });
+        });
+        renderDrugDetails();
+    }
+
+    function renderDrugDetails() {
+        const selected = document.getElementById("drug-select").value;
+        const drug = getAllDrugs().find(d => String(d["Nombre del medicamento"]) === selected);
+        const container = document.getElementById("drug-details-container");
+
+        if (!drug) {
+            container.innerHTML = "<div class='alert alert-warning'>Detalles no encontrados para el medicamento seleccionado.</div>";
+            return;
+        }
+
+        const val = (key) => drug[key] || "N/A";
+
+        container.innerHTML = `
+            <div>
+                <h3 class="section-subtitle">📋 Ficha Fisicoquímica y Estabilidad</h3>
+                <div class="detail-row"><strong>Tipo de Fármaco:</strong> ${val("tipo de fármaco")}</div>
+                <div class="detail-row"><strong>Reconstitución:</strong> ${val("recomendación de reconstitución")}</div>
+                <div class="detail-row"><strong>Dilución del Vial:</strong> ${val("dilución del vial liofilizado")}</div>
+                <div class="detail-row"><strong>Estabilidad del Vial Cerrado:</strong> ${val("estabilidad del vial cerrado")}</div>
+                <div class="detail-row"><strong>Estabilidad de la Mezcla:</strong> ${val("estabilidad de la mezcla")}</div>
+                <div class="detail-row"><strong>Dosis Máxima Guía:</strong> ${val("dosis máxima guía")}</div>
+                <div class="detail-row"><strong>Tiempo de Infusión:</strong> ${val("tiempo de infusión")}</div>
+            </div>
+            <div>
+                <h3 class="section-subtitle" style="color: #D32F2F;">⚠️ Alertas de Seguridad y Manejo</h3>
+                <div class="alert alert-error"><strong>Excipientes críticos:</strong> ${val("excipientes")}</div>
+                <div class="alert alert-warning"><strong>Contraindicaciones:</strong> ${val("contraindicaciones")}</div>
+                <div class="alert alert-warning"><strong>Interacciones:</strong> ${val("interacciones")}</div>
+                <div class="alert alert-warning"><strong>Incompatibilidades:</strong> ${val("incompatibilidades")}</div>
+                <div class="alert alert-warning"><strong>Reacciones Adversas (RAM):</strong> ${val("reacciones adversas")}</div>
+                <div class="alert alert-info"><strong>Premedicación Requerida:</strong> ${val("premedicación requerida")}</div>
+            </div>
+        `;
+    }
+
+    function calculateDose() {
+        const peso = parseFloat(document.getElementById("calc-peso").value) || 0;
+        const talla = parseFloat(document.getElementById("calc-talla").value) || 1;
+        const targetDose = parseFloat(document.getElementById("calc-dose").value) || 0;
+        const calcType = document.querySelector('input[name="calc-type"]:checked').value;
+
+        const sc = Math.sqrt((peso * (talla * 100)) / 3600);
+        const imc = peso / (talla * talla);
+
+        document.getElementById("imc-val").textContent = imc.toFixed(2) + " kg/m²";
+        document.getElementById("sc-val").textContent = sc.toFixed(2) + " m²";
+
+        let finalDose = 0;
+        let formulaText = "";
+
+        if (calcType === "sc") {
+            finalDose = targetDose * sc;
+            formulaText = `Fórmula aplicada: ${targetDose} mg/m² × ${sc.toFixed(2)} m²`;
+        } else {
+            finalDose = targetDose * peso;
+            formulaText = `Fórmula aplicada: ${targetDose} mg/kg × ${peso.toFixed(1)} kg`;
+        }
+
+        document.getElementById("final-dose-val").textContent = finalDose.toFixed(2) + " mg";
+        document.getElementById("formula-text").textContent = formulaText;
+    }
+
+    function renderScheme() {
+        const selectEl = document.getElementById("scheme-select");
+        const selectedNames = Array.from(selectEl.selectedOptions).map(o => o.value);
+        const output = document.getElementById("scheme-output");
+
+        if (selectedNames.length === 0) {
+            output.innerHTML = `<div class="alert alert-info">Por favor, seleccione al menos un fármaco del selector superior para iniciar el análisis cruzado de compatibilidades.</div>`;
+            return;
+        }
+
+        const selectedDrugs = getAllDrugs().filter(d => selectedNames.includes(String(d["Nombre del medicamento"])));
+        let html = `<h3>Resumen del Esquema Terapéutico</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre del medicamento</th>
+                        <th>Tipo de fármaco</th>
+                        <th>Dosis máxima guía</th>
+                        <th>Tiempo de infusión</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        selectedDrugs.forEach(d => {
+            html += `<tr>
+                <td>${d["Nombre del medicamento"] || "N/A"}</td>
+                <td>${d["tipo de fármaco"] || "N/A"}</td>
+                <td>${d["dosis máxima guía"] || "N/A"}</td>
+                <td>${d["tiempo de infusión"] || "N/A"}</td>
+            </tr>`;
+        });
+        html += `</tbody></table>`;
+
+        if (selectedNames.length >= 3) {
+            html += `
+            <div style="background-color: #FFEBEE; border-left: 6px solid #D32F2F; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <h4 style="color: #D32F2F; margin: 0;">⚠️ ALERTA CRÍTICA: POLIFARMACIA DETECTADA (&ge; 3 Fármacos)</h4>
+                <p style="color: #212121; margin-top: 5px;">El esquema actual incluye tres o más fármacos simultáneos. Se requiere vigilar estrictamente la mielosupresión acumulativa, nefrotoxicidad potencial y el desfase correcto de los tiempos de infusión.</p>
+            </div>`;
+        }
+
+        html += `<h3>Desglose y Análisis Cruzado de Seguridad</h3>`;
+        selectedDrugs.forEach(d => {
+            html += `
+            <details>
+                <summary>Interacciones e Incompatibilidades de: ${d["Nombre del medicamento"]}</summary>
+                <p><strong>Excipientes:</strong> ${d["excipientes"] || "N/A"}</p>
+                <p><strong>Incompatibilidades:</strong> ${d["incompatibilidades"] || "N/A"}</p>
+                <p><strong>Interacciones:</strong> ${d["interacciones"] || "N/A"}</p>
+                <p><strong>Reacciones Adversas principales:</strong> ${d["reacciones adversas"] || "N/A"}</p>
+            </details>`;
+        });
+
+        output.innerHTML = html;
+    }
+
+    function addCustomDrug(event) {
+        event.preventDefault();
+        const name = document.getElementById("add-name").value.trim();
+        const msgEl = document.getElementById("add-drug-msg");
+
+        if (!name) {
+            msgEl.innerHTML = `<div class="alert alert-error">Debe ingresar al menos el nombre del fármaco.</div>`;
+            return;
+        }
+
+        const newDrug = {
+            "Nombre del medicamento": name,
+            "tipo de fármaco": document.getElementById("add-tipo").value,
+            "recomendación de reconstitución": document.getElementById("add-reconst").value,
+            "dilución del vial liofilizado": document.getElementById("add-dilution").value,
+            "estabilidad del vial cerrado": document.getElementById("add-est-cerrado").value,
+            "estabilidad de la mezcla": document.getElementById("add-est-mezcla").value,
+            "dosis máxima guía": document.getElementById("add-max-dose").value,
+            "tiempo de infusión": document.getElementById("add-inf-time").value,
+            "excipientes": document.getElementById("add-excipientes").value,
+            "contraindicaciones": document.getElementById("add-contraindic").value,
+            "interacciones": document.getElementById("add-interact").value,
+            "incompatibilidades": document.getElementById("add-incompat").value,
+            "reacciones adversas": document.getElementById("add-adv").value,
+            "premedicación requerida": document.getElementById("add-premed").value
+        };
+
+        customDrugs.push(newDrug);
+        refreshDrugSelectors();
+        document.getElementById("add-drug-form").reset();
+        msgEl.innerHTML = `<div class="alert alert-success">¡El medicamento '${name}' ha sido registrado exitosamente en la sesión activa!</div>`;
+    }
+</script>
+
+</body>
+</html>
